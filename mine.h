@@ -12,6 +12,7 @@ typedef unsigned short Area;
 extern Board *make();
 extern void alloc(Board *);
 extern bool mine(Board *, Area);
+extern void destroy(Board *);
 
 extern bool cont(Board *);
 extern Dim rows(Board *);
@@ -23,7 +24,7 @@ extern void check(Board *, Dim, Dim);
 extern void fnBoard(void (*)(Board *, Dim, Dim), Board *);
 
 extern Board *init();
-extern void turn(Board *);
+extern void play(Board *);
 extern void output(Board *);
 extern void end(Board *);
 

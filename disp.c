@@ -13,13 +13,13 @@ char color(char val) {
     }
 }
 
-void turn(Board *b) {
-    static int ch;
+void play(Board *b) {
+    static char ch;
     static int x = 0;
     static int y = 0;
-    for(ch = getch(); ch != 'c'; ch = getch()) {
-        mvchgat(y, x*3, 3, A_NORMAL, color(val(b, y, x)), NULL);
-        switch(ch) {
+    while(cont(b)) {
+        switch(getch()) {
+            chgat(3, A_NORMAL, color(val(b, y, x)), NULL);
             case 'h':
                 x = (x + cols(b) - 1) % cols(b);
                 break;
@@ -39,10 +39,12 @@ void turn(Board *b) {
             case 'q':
                 endwin();
                 exit(0);
+            case 'c':
+                check(b, y, x);
         }
+        output(b);
         mvchgat(y, x*3, 3, A_REVERSE, color(val(b, y, x)), NULL);
     }
-    check(b, y, x);
 }
 
 Board *init() {
@@ -55,8 +57,6 @@ Board *init() {
         init_pair(1, COLOR_BLACK, COLOR_YELLOW);
         init_pair(2, COLOR_WHITE, COLOR_BLUE);
         init_pair(3, COLOR_BLACK, COLOR_CYAN);
-        init_pair(4, COLOR_RED, COLOR_CYAN);
-        init_pair(5, COLOR_RED, COLOR_YELLOW);
     }
     cbreak();
     keypad(stdscr, TRUE);
@@ -64,9 +64,10 @@ Board *init() {
     noecho();
     output(b);
     mvchgat(0, 0, 3, A_REVERSE, 2, NULL);
+    return b;
 }
 
-void printSpot(Board *b, Dim h, Dim v) {
+static void printSpot(Board *b, Dim h, Dim v) {
     char value = val(b, h, v);
     attron(COLOR_PAIR(color(val(b, h, v))));
     if(value == -1) {
@@ -92,5 +93,6 @@ void end(Board *b) {
         mvprintw(rows(b), 0, "You have losed.");
     }
     getch();
+    destroy(b);
     endwin();
 }

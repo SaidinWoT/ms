@@ -181,3 +181,11 @@ bool mine(Board *b, Area mines) {
     }
     return true;
 }
+
+void destroy(Board *b) {
+    while(b->rows--) {
+        free(b->grid[b->rows]);
+    }
+    free(b->grid);
+    free(b);
+}
