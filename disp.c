@@ -13,6 +13,7 @@ char color(char val) {
     }
 }
 
+<<<<<<< HEAD
 void play(Board *b) {
     static char ch;
     static int x = 0;
@@ -20,6 +21,15 @@ void play(Board *b) {
     while(cont(b)) {
         switch(getch()) {
             chgat(3, A_NORMAL, color(val(b, y, x)), NULL);
+=======
+void turn(Board *b) {
+    static char ch;
+    static int x = 0;
+    static int y = 0;
+    while(ch = getch()) {
+        mvchgat(y, x*3, 3, A_NORMAL, color(val(b, y, x)), NULL);
+        switch(ch) {
+>>>>>>> 0fe3865a7330f28910c369f20d376f850a88a9db
             case 'h':
                 x = (x + cols(b) - 1) % cols(b);
                 break;
@@ -41,6 +51,10 @@ void play(Board *b) {
                 exit(0);
             case 'c':
                 check(b, y, x);
+<<<<<<< HEAD
+=======
+                return;
+>>>>>>> 0fe3865a7330f28910c369f20d376f850a88a9db
         }
         output(b);
         mvchgat(y, x*3, 3, A_REVERSE, color(val(b, y, x)), NULL);
