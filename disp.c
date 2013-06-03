@@ -14,10 +14,10 @@ char color(char val) {
 }
 
 void turn(Board *b) {
-    static int ch;
+    static char ch;
     static int x = 0;
     static int y = 0;
-    for(ch = getch(); ch != 'c'; ch = getch()) {
+    while(ch = getch()) {
         mvchgat(y, x*3, 3, A_NORMAL, color(val(b, y, x)), NULL);
         switch(ch) {
             case 'h':
@@ -39,10 +39,12 @@ void turn(Board *b) {
             case 'q':
                 endwin();
                 exit(0);
+            case 'c':
+                check(b, y, x);
+                return;
         }
         mvchgat(y, x*3, 3, A_REVERSE, color(val(b, y, x)), NULL);
     }
-    check(b, y, x);
 }
 
 Board *init() {
@@ -64,9 +66,10 @@ Board *init() {
     noecho();
     output(b);
     mvchgat(0, 0, 3, A_REVERSE, 2, NULL);
+    return b;
 }
 
-void printSpot(Board *b, Dim h, Dim v) {
+static void printSpot(Board *b, Dim h, Dim v) {
     char value = val(b, h, v);
     attron(COLOR_PAIR(color(val(b, h, v))));
     if(value == -1) {
@@ -92,5 +95,6 @@ void end(Board *b) {
         mvprintw(rows(b), 0, "You have losed.");
     }
     getch();
+    destroy(b);
     endwin();
 }

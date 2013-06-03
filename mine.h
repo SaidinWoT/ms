@@ -12,6 +12,7 @@ typedef unsigned short Area;
 extern Board *make();
 extern void alloc(Board *);
 extern bool mine(Board *, Area);
+extern void destroy(Board *);
 
 extern bool cont(Board *);
 extern Dim rows(Board *);
