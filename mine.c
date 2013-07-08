@@ -22,7 +22,6 @@ bool won(Board *b) {
 }
 
 void around(void (*fn)(Board *, Dim, Dim, Dim), Board *b, Dim z, Dim y, Dim x) {
-    /*                   1  2  4  8| 1  2  4  8| 1  2  4  8| 1  2  4  8| 1  2  4  8| 1  2  4  8| 1  2  4 */
     static char dz[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     static char dy[] = {-1,-1,-1, 0, 0, 0, 1, 1, 1,-1,-1,-1, 0, 0, 0, 1, 1, 1,-1,-1,-1, 0, 0, 0, 1, 1, 1};
     static char dx[] = {-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1};
@@ -41,13 +40,10 @@ void around(void (*fn)(Board *, Dim, Dim, Dim), Board *b, Dim z, Dim y, Dim x) {
 }
 
 void fnBoard(void (*fn)(Board *, Dim, Dim, Dim), Board *b) {
-    Dim z = b->zlen;
-    Dim y, x;
-    while(z--) {
-        y = b->ylen;
-        while(y--) {
-            x = b->xlen;
-            while(x--) {
+    Dim z, y, x;
+    for(z = b->zlen; z--;) {
+        for(y = b->ylen; y--;) {
+            for(x = b->xlen; x--;) {
                 (*fn)(b, z, y, x);
             }
         }
@@ -67,26 +63,6 @@ char val(Board *b, Dim z, Dim y, Dim x) {
     } else {
         return INVISIBLE;
     }
-}
-
-static inline void zero(Board *b, Dim z, Dim y, Dim x) {
-    b->grid[z][y][x].val = b->grid[z][y][x].flag = 0;
-}
-
-static inline void incVal(Board *b, Dim z, Dim y, Dim x) {
-    ++b->grid[z][y][x].val;
-}
-
-static inline void incFlag(Board *b, Dim z, Dim y, Dim x) {
-    ++b->grid[z][y][x].flag;
-}
-
-static inline void decFlag(Board *b, Dim z, Dim y, Dim x) {
-    --b->grid[z][y][x].flag;
-}
-
-static inline void show(Board *b, Dim z, Dim y, Dim x) {
-    b->grid[z][y][x].val |= VISIBLE;
 }
 
 void reveal(Board *b, Dim z, Dim y, Dim x) {
@@ -117,6 +93,14 @@ void check(Board *b, Dim z, Dim y, Dim x) {
     reveal(b, z, y, x);
 }
 
+static inline void incFlag(Board *b, Dim z, Dim y, Dim x) {
+    ++b->grid[z][y][x].flag;
+}
+
+static inline void decFlag(Board *b, Dim z, Dim y, Dim x) {
+    --b->grid[z][y][x].flag;
+}
+
 void flag(Board *b, Dim z, Dim y, Dim x) {
     if(b->grid[z][y][x].val & VISIBLE) {
         return;
@@ -144,6 +128,10 @@ Board *make(Opts *opts) {
     return b;
 }
 
+static inline void zero(Board *b, Dim z, Dim y, Dim x) {
+    b->grid[z][y][x].val = b->grid[z][y][x].flag = 0;
+}
+
 void alloc(Board *b) {
     Dim z = b->zlen;
     Dim y = b->ylen;
@@ -158,6 +146,10 @@ void alloc(Board *b) {
         }
     }
     fnBoard(zero, b);
+}
+
+static inline void incVal(Board *b, Dim z, Dim y, Dim x) {
+    ++b->grid[z][y][x].val;
 }
 
 bool mine(Board *b, Dim z, Dim y, Dim x, Vol mines) {
@@ -182,6 +174,10 @@ bool mine(Board *b, Dim z, Dim y, Dim x, Vol mines) {
     }
     b->grid[z][y][x].val &= ~MINE;
     return true;
+}
+
+static inline void show(Board *b, Dim z, Dim y, Dim x) {
+    b->grid[z][y][x].val |= VISIBLE;
 }
 
 void showAll(Board *b) {
