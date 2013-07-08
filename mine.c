@@ -22,9 +22,10 @@ bool won(Board *b) {
 }
 
 void around(void (*fn)(Board *, Dim, Dim, Dim), Board *b, Dim z, Dim y, Dim x) {
-    static char dz[] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
-    static char dy[] = {-1,-1,-1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0,-1,-1,-1,-1,-1,-1, 0, 0, 0, 1, 1, 1};
-    static char dx[] = {-1, 0, 1,-1, 1,-1, 0, 1, 1, 0,-1, 1, 0,-1, 1, 0,-1,-1, 0, 1,-1, 0, 1,-1, 0, 1};
+    /*                   1  2  4  8| 1  2  4  8| 1  2  4  8| 1  2  4  8| 1  2  4  8| 1  2  4  8| 1  2  4 */
+    static char dz[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    static char dy[] = {-1,-1,-1, 0, 0, 0, 1, 1, 1,-1,-1,-1, 0, 0, 0, 1, 1, 1,-1,-1,-1, 0, 0, 0, 1, 1, 1};
+    static char dx[] = {-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1};
     char u, v, w, n;
     int pattern = b->pattern & 0x07FFFFFF;
     for(n = 0; pattern; ++n, pattern >>= 1) {
@@ -130,12 +131,12 @@ void flag(Board *b, Dim z, Dim y, Dim x) {
     b->grid[z][y][x].flag ^= VISIBLE;
 }
 
-Board *make() {
+Board *make(Opts *opts) {
     Board *b = malloc(sizeof(Board));
-    b->pattern = 0x800000FF;
-    b->zlen = 1;
-    b->ylen = 10;
-    b->xlen = 10;
+    b->pattern = opts->pattern | CONT;
+    b->zlen = opts->z;
+    b->ylen = opts->y;
+    b->xlen = opts->x;
     b->mines = 0;
     b->flags = 0;
     b->clean = (b->zlen * b->ylen * b->xlen);
