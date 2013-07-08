@@ -16,54 +16,62 @@ short color(char val) {
             return val;
     }
 }
-void play(Board *b) {
+
+void cursor(Board *b) {
     static char v;
-    while(cont(b)) {
-        if((v = val(b, z+1, y, x)) != INVALID) {
-            mvchgat(4, 6, 3, A_REVERSE, color(v), NULL);
-        }
-        mvchgat(4, 30, 3, A_REVERSE, color(val(b, z, y, x)), NULL);
-        if((v = val(b, z-1, y, x)) != INVALID) {
-            mvchgat(4, 54, 3, A_REVERSE, color(v), NULL);
-        }
-        switch(getch()) {
+    if((v = val(b, z+1, y, x)) != INVALID) {
+        mvchgat(4, 6, 3, A_REVERSE, color(v), NULL);
+    }
+    mvchgat(4, 30, 3, A_REVERSE, color(val(b, z, y, x)), NULL);
+    if((v = val(b, z-1, y, x)) != INVALID) {
+        mvchgat(4, 54, 3, A_REVERSE, color(v), NULL);
+    }
+}
+
+void turn(Board *b) {
+    static char c;
+    while((c = getch()) != 'c') {
+        switch(c) {
             case 'h':
-                x = (x + xlen(b) - 1) % xlen(b);
+                x = (x + b->xlen - 1) % b->xlen;
                 break;
             case 'j':
-                y = (y + ylen(b) + 1) % ylen(b);
+                y = (y + b->ylen + 1) % b->ylen;
                 break;
             case 'k':
-                y = (y + ylen(b) - 1) % ylen(b);
+                y = (y + b->ylen - 1) % b->ylen;
                 break;
             case 'l':
-                x = (x + xlen(b) + 1) % xlen(b);
+                x = (x + b->xlen + 1) % b->xlen;
                 break;
             case 'u':
-                z = (z + zlen(b) + 1) % zlen(b);
+                z = (z + b->zlen + 1) % b->zlen;
                 break;
             case 'd':
-                z = (z + zlen(b) - 1) % zlen(b);
+                z = (z + b->zlen - 1) % b->zlen;
                 break;
             case 'f':
                 flag(b, z, y, x);
                 output(b);
                 break;
             case 'q':
-                endwin();
+                end(b);
                 exit(0);
-            case 'c':
-                check(b, z, y, x);
         }
         output(b);
     }
 }
 
-Board *init() {
+void play(Board *b) {
+    while(cont(b)) {
+        turn(b);
+        check(b, z, y, x);
+        output(b);
+    }
+}
+
+void initDisp() {
     char c;
-    Board *b = make();
-    alloc(b);
-    mine(b, 30);
     initscr();
     if(has_colors() == TRUE) {
         start_color();
@@ -79,26 +87,37 @@ Board *init() {
             init_color(9, 700, 700, 0);
             init_color(10, 700, 50, 50);
             init_color(11, 0, 800, 800);
-            short colors[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
             for(c = 0; c < FLAG; ++c) {
-                init_pair(c + 1, (c % 9) + 1, 0);
+                init_pair(c + 1, (c % 9) + 1, COLOR_BLACK);
             }
-            init_pair(FLAG, 10, 0);
-            init_pair(INVISIBLE, 11, 0);
-            init_pair(INVALID, 2, 0);
+            init_pair(FLAG, 10, COLOR_BLACK);
+            init_pair(INVISIBLE, 11, COLOR_BLACK);
+            init_pair(INVALID, 2, COLOR_BLACK);
         } else {
-            short colors[] = {COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_MAGENTA, COLOR_RED, COLOR_CYAN, COLOR_WHITE, COLOR_YELLOW};
-            for(c = 0; c < INVALID + 1; ++c) {
-                init_pair(c + 1, colors[c % 7], 0);
+            short colors[] = {COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_MAGENTA, COLOR_RED, COLOR_BLUE, COLOR_WHITE, COLOR_YELLOW};
+            for(c = 0; c < FLAG + 1; ++c) {
+                init_pair(c + 1, colors[c % 8], COLOR_BLACK);
             }
+            init_pair(INVISIBLE, COLOR_CYAN, COLOR_BLACK);
+            init_pair(INVALID, COLOR_GREEN, COLOR_BLACK);
         }
+        init_pair(MINED, COLOR_BLACK, COLOR_RED);
     }
     cbreak();
     keypad(stdscr, TRUE);
     curs_set(0);
     noecho();
+}
+
+Board *init() {
+    Board *b = make();
+    initDisp();
+    alloc(b);
     output(b);
-    /* mvchgat(4, 30, 3, A_REVERSE, FLAG + 1, NULL); */
+    turn(b);
+    mine(b, z, y, x, 15);
+    check(b, z, y, x);
+    output(b);
     return b;
 }
 
@@ -113,17 +132,12 @@ static char *spotstr(char v) {
             return " ~ ";
         case FLAG:
             return "[F]";
+        case MINED:
+            return " * ";
         default:
             sprintf(ret, "[%X]", v);
             return ret;
     }
-}
-
-static void printSpot(Board *b, Dim z, Dim y, Dim x) {
-    char c = val(b, z, y, x);
-    attron(COLOR_PAIR(color(c)));
-    mvprintw(y, 3*x, spotstr(c));
-    attroff(COLOR_PAIR(color(c)));
 }
 
 void output(Board *b) {
@@ -150,15 +164,21 @@ void output(Board *b) {
             attroff(COLOR_PAIR(color(c)));
         }
     }
+    attron(COLOR_PAIR(2));
+    mvprintw(8, 3, "Flags: %2d", b->flags);
+    attroff(COLOR_PAIR(2));
+    cursor(b);
 }
 
 void end(Board *b) {
     attron(COLOR_PAIR(2));
     if(won(b)) {
-        mvprintw(ylen(b), 0, "You have winned.");
+        mvprintw(12, 0, "You have winned.");
     } else {
-        mvprintw(ylen(b), 0, "You have losed.");
+        mvprintw(12, 0, "You have losed.");
     }
+    showAll(b);
+    output(b);
     getch();
     destroy(b);
     clear();
