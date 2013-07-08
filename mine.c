@@ -6,66 +6,35 @@
 #define MINE 0x40
 #define VISIBLE 0x80
 
-typedef struct {
+#define CONT (0x1 << 31)
+
+struct _Spot {
     char val;
     char flag;
-} Spot;
-
-struct _Board {
-    bool cont;
-    bool alloc;
-    Dim zlen;
-    Dim ylen;
-    Dim xlen;
-    Vol mines;
-    Vol flags;
-    Vol clean;
-    Spot ***grid;
 };
 
 bool cont(Board *b) {
-    return b->cont;
+    return b->pattern & CONT;
 }
 
 bool won(Board *b) {
     return !b->clean;
 }
 
-Dim zlen(Board *b) {
-    return b->zlen;
-}
-
-Dim ylen(Board *b) {
-    return b->ylen;
-}
-
-Dim xlen(Board *b) {
-    return b->xlen;
-}
-
 void around(void (*fn)(Board *, Dim, Dim, Dim), Board *b, Dim z, Dim y, Dim x) {
-    static char dz[] = {0, 0, 0, 0, 0, 0, 0, 0, \
-        1, 0, 0, 0, 0, 0, 0, 0, 0, \
-        -2, 0, 0, 0, 0, 0, 0, 0, 0};
-    static char dy[] = {-1, 0, 0, 1, 0, 1, 0, 0, \
-        0, 0, 0, -1, 0, 0, -1, 0, 0, \
-        0, 0, 0, 1, 0, 0, 1, 0, 0};
-    static char dx[] = {-1, 1, 1, -2, 2, -2, 1, 1, \
-        0, -1, -1, 2, -1, -1, 2, -1, -1, \
-        0, 1, 1, -2, 1, 1, -2, 1, 1};
-    /* static char dz[] = { 0,  0,  0,  0,  0,  0,  0,  0}; */
-    /* static char dy[] = {-1,  0,  0,  1,  0,  1,  0,  0}; */
-    /* static char dx[] = {-1,  1,  1, -2,  2, -2,  1,  1}; */
-    /* static char dz[] = { 0, 0,  0,  0}; */
-    /* static char dy[] = {-1, 1,  1, -1}; */
-    /* static char dx[] = { 0, 1, -1, -1}; */
-    char n;
-    for(n = 0; n < sizeof(dy)/sizeof(dy[0]); ++n) {
-        z += dz[n];
-        y += dy[n];
-        x += dx[n];
-        if(z >= 0 && z < b->zlen && y >= 0 && y < b->ylen && x >= 0 && x < b->xlen) {
-            (*fn)(b, z, y, x);
+    static char dz[] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+    static char dy[] = {-1,-1,-1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0,-1,-1,-1,-1,-1,-1, 0, 0, 0, 1, 1, 1};
+    static char dx[] = {-1, 0, 1,-1, 1,-1, 0, 1, 1, 0,-1, 1, 0,-1, 1, 0,-1,-1, 0, 1,-1, 0, 1,-1, 0, 1};
+    char u, v, w, n;
+    int pattern = b->pattern & 0x07FFFFFF;
+    for(n = 0; pattern; ++n, pattern >>= 1) {
+        if(pattern & 1) {
+            w = z + dz[n];
+            v = y + dy[n];
+            u = x + dx[n];
+            if(w >= 0 && w < b->zlen && v >= 0 && v < b->ylen && u >= 0 && u < b->xlen) {
+                (*fn)(b, w, v, u);
+            }
         }
     }
 }
@@ -90,6 +59,9 @@ char val(Board *b, Dim z, Dim y, Dim x) {
     } else if(b->grid[z][y][x].flag & VISIBLE) {
         return FLAG;
     } else if(b->grid[z][y][x].val & VISIBLE) {
+        if(b->grid[z][y][x].val & MINE) {
+            return MINED;
+        }
         return b->grid[z][y][x].val & VALUE;
     } else {
         return INVISIBLE;
@@ -112,17 +84,21 @@ static inline void decFlag(Board *b, Dim z, Dim y, Dim x) {
     --b->grid[z][y][x].flag;
 }
 
+static inline void show(Board *b, Dim z, Dim y, Dim x) {
+    b->grid[z][y][x].val |= VISIBLE;
+}
+
 void reveal(Board *b, Dim z, Dim y, Dim x) {
     if(b->grid[z][y][x].val & VISIBLE || b->grid[z][y][x].flag & VISIBLE) {
         return;
     }
     if(b->grid[z][y][x].val & MINE) {
-        b->cont = false;
+        b->pattern &= ~CONT;
         return;
     }
     b->grid[z][y][x].val |= VISIBLE;
     if(!--b->clean) {
-        b->cont = false;
+        b->pattern &= ~CONT;
         return;
     }
     if(!(b->grid[z][y][x].val & VALUE)) {
@@ -145,10 +121,10 @@ void flag(Board *b, Dim z, Dim y, Dim x) {
         return;
     }
     if(b->grid[z][y][x].flag & VISIBLE) {
-        --b->flags;
+        ++b->flags;
         around(&decFlag, b, z, y, x);
     } else {
-        ++b->flags;
+        --b->flags;
         around(&incFlag, b, z, y, x);
     }
     b->grid[z][y][x].flag ^= VISIBLE;
@@ -156,14 +132,13 @@ void flag(Board *b, Dim z, Dim y, Dim x) {
 
 Board *make() {
     Board *b = malloc(sizeof(Board));
-    b->zlen = 3;
+    b->pattern = 0x800000FF;
+    b->zlen = 1;
     b->ylen = 10;
     b->xlen = 10;
     b->mines = 0;
     b->flags = 0;
     b->clean = (b->zlen * b->ylen * b->xlen);
-    b->alloc = false;
-    b->cont = true;
     b->grid = NULL;
     return b;
 }
@@ -177,19 +152,15 @@ void alloc(Board *b) {
     b->grid = malloc(b->zlen * sizeof(Spot **));
     while(z--) {
         b->grid[z] = malloc(b->ylen * sizeof(Spot *));
-        while(y--) {
+        for(y = b->ylen; y--;) {
             b->grid[z][y] = malloc(b->xlen * sizeof(Spot));
         }
     }
     fnBoard(zero, b);
-    b->alloc = true;
 }
 
-bool mine(Board *b, Vol mines) {
-    Dim z, y, x;
-    if(!b->alloc) {
-        return false;
-    }
+bool mine(Board *b, Dim z, Dim y, Dim x, Vol mines) {
+    Dim w, v, u;
     if(mines > b->clean) {
         return false;
     }
@@ -197,23 +168,30 @@ bool mine(Board *b, Vol mines) {
     b->mines += mines;
     b->flags += mines;
     b->clean -= mines;
+    b->grid[z][y][x].val |= MINE;
     while(mines) {
-        z = rand() % b->zlen;
-        y = rand() % b->ylen;
-        x = rand() % b->xlen;
-        if(!(b->grid[z][y][x].val & (MINE | VISIBLE))) {
-            b->grid[z][y][x].val |= MINE;
-            around(&incVal, b, z, y, x);
+        w = rand() % b->zlen;
+        v = rand() % b->ylen;
+        u = rand() % b->xlen;
+        if(!(b->grid[w][v][u].val & (MINE | VISIBLE))) {
+            b->grid[w][v][u].val |= MINE;
+            around(&incVal, b, w, v, u);
             --mines;
         }
     }
+    b->grid[z][y][x].val &= ~MINE;
     return true;
 }
 
+void showAll(Board *b) {
+    fnBoard(show, b);
+}
+
 void destroy(Board *b) {
+    Dim y;
     while(b->zlen--) {
-        while(b->ylen--) {
-            free(b->grid[b->zlen][b->ylen]);
+        for(y = b->ylen; y--;) {
+            free(b->grid[b->zlen][y]);
         }
         free(b->grid[b->zlen]);
     }
