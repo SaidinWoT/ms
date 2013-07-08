@@ -30,8 +30,9 @@ void cursor(Board *b) {
 
 void turn(Board *b) {
     static char c;
-    while((c = getch()) != 'c') {
-        switch(c) {
+    for(;;) {
+        output(b);
+        switch((c = getch())) {
             case 'h':
                 x = (x + b->xlen - 1) % b->xlen;
                 break;
@@ -52,13 +53,13 @@ void turn(Board *b) {
                 break;
             case 'f':
                 flag(b, z, y, x);
-                output(b);
                 break;
             case 'q':
                 end(b);
                 exit(0);
+            case 'c':
+                return;
         }
-        output(b);
     }
 }
 
@@ -66,7 +67,6 @@ void play(Board *b) {
     while(cont(b)) {
         turn(b);
         check(b, z, y, x);
-        output(b);
     }
 }
 
@@ -113,55 +113,51 @@ Board *init() {
     Board *b = make();
     initDisp();
     alloc(b);
-    output(b);
     turn(b);
     mine(b, z, y, x, 15);
     check(b, z, y, x);
-    output(b);
     return b;
 }
 
-static char *spotstr(char v) {
-    char *ret = malloc(3*sizeof(char));
-    switch(v) {
+static void spotrep(char c, char *str) {
+    switch(c) {
         case 0:
-            return "   ";
-        case INVISIBLE:
-            return "[?]";
+            sprintf(str, "   "); return;
         case INVALID:
-            return " ~ ";
-        case FLAG:
-            return "[F]";
+            sprintf(str, " ~ "); return;
         case MINED:
-            return " * ";
+            sprintf(str, " * "); return;
+        case INVISIBLE:
+            sprintf(str, "[?]"); return;
+        case FLAG:
+            sprintf(str, "[F]"); return;
         default:
-            sprintf(ret, "[%X]", v);
-            return ret;
+            sprintf(str, "[%1X]", c); return;
     }
+}
+
+void print(char c, char h, char v) {
+    char *str = malloc(4*sizeof(char));
+    spotrep(c, str);
+    attron(COLOR_PAIR(color(c)));
+    mvprintw(h, v, str);
+    attroff(COLOR_PAIR(color(c)));
+    free(str);
 }
 
 void output(Board *b) {
     static char off[] = {-2, -1, 0, 1, 2};
     static char on[] = {-4, -3, -2, -1, 0, 1, 2, 3, 4};
-    char h, v, c;
-    for(h = 0; h < sizeof(on)/sizeof(*on); ++h) {
-        for(v = 0; v < sizeof(on)/sizeof(*on); ++v) {
-            c = val(b, z, y + on[h], x + on[v]);
-            attron(COLOR_PAIR(color(c)));
-            mvprintw(h, 3*(1+(sizeof(off)/sizeof(*off))+v), spotstr(c));
-            attroff(COLOR_PAIR(color(c)));
+    char c, h, v;
+    for(h = -4; h <= 4; ++h) {
+        for(v = -4; v <= 4; ++v) {
+            print(val(b, z, y + h, x + v), h+4, 3*(v+10));
         }
     }
-    for(h = 0; h < sizeof(off)/sizeof(*off); ++h) {
-        for(v = 0; v < sizeof(off)/sizeof(*off); ++v) {
-            c = val(b, z+1, y + off[h], x + off[v]);
-            attron(COLOR_PAIR(color(c)));
-            mvprintw(h+2, 3*v, spotstr(c));
-            attroff(COLOR_PAIR(color(c)));
-            c = val(b, z-1, y + off[h], x + off[v]);
-            attron(COLOR_PAIR(color(c)));
-            mvprintw(h+2, 3*(2+(sizeof(off)/sizeof(*off))+(sizeof(on)/sizeof(*on))+v), spotstr(c));
-            attroff(COLOR_PAIR(color(c)));
+    for(h = -2; h <= 2; ++h) {
+        for(v = -2; v <= 2; ++v) {
+            print(val(b, z+1, y + h, x + v), h+4, 3*(v+2));
+            print(val(b, z-1, y + h, x + v), h+4, 3*(v+18));
         }
     }
     attron(COLOR_PAIR(2));
@@ -172,11 +168,7 @@ void output(Board *b) {
 
 void end(Board *b) {
     attron(COLOR_PAIR(2));
-    if(won(b)) {
-        mvprintw(12, 0, "You have winned.");
-    } else {
-        mvprintw(12, 0, "You have losed.");
-    }
+    mvprintw(b->ylen, 0, won(b) ? "You have winned." : "You have losed.");
     showAll(b);
     output(b);
     getch();
