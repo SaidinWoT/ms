@@ -109,12 +109,11 @@ void initDisp() {
     noecho();
 }
 
-Board *init() {
-    Board *b = make();
+Board *init(Board *b, Opts *opts) {
     initDisp();
-    alloc(b);
+    alloc(b);Dim
     turn(b);
-    mine(b, z, y, x, 15);
+    mine(b, z, y, x, opts->mines);
     check(b, z, y, x);
     return b;
 }
