@@ -9,10 +9,10 @@
 #define MINED 30
 
 typedef enum { \
-    CROSS = 0x00000000, \
-    SQUARE = 0x00000000, \
-    CROSS3D = 0x00000000, \
-    RINGS = 0x00000000, \
+    CROSS = 0x00015400, \
+    SQUARE = 0x0003DE00, \
+    CROSS3D = 0x00415410, \
+    RINGS = 0x02EBDEBA, \
     CUBE = 0x07FFDFFF} Pattern;
 
 typedef unsigned char Dim;
@@ -41,7 +41,6 @@ extern bool cont(Board *);
 extern char val(Board *, Dim, Dim, Dim);
 extern void flag(Board *, Dim, Dim, Dim);
 extern void check(Board *, Dim, Dim, Dim);
-extern void fnBoard(void (*)(Board *, Dim, Dim, Dim), Board *);
 extern void showAll(Board *);
 
 extern Board *init();
