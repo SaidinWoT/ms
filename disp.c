@@ -45,15 +45,6 @@ void initDisp() {
     noecho();
 }
 
-Board *init(Board *b, Opts *opts) {
-    initDisp();
-    alloc(b);
-    turn(b);
-    mine(b, z, y, x, opts->mines);
-    check(b, z, y, x);
-    return b;
-}
-
 void turn(Board *b) {
     static char c;
     for(;;) {
@@ -87,6 +78,15 @@ void turn(Board *b) {
                 return;
         }
     }
+}
+
+Board *init(Board *b, Opts *opts) {
+    initDisp();
+    alloc(b);
+    turn(b);
+    mine(b, z, y, x, opts->mines);
+    check(b, z, y, x);
+    return b;
 }
 
 void play(Board *b) {

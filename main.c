@@ -6,21 +6,20 @@ Opts opts = {.pattern = SQUARE, .z = 1, .y = 10, .x = 10, .mines = 15};
 
 void usage() {
     printf("ms by Scott Frazier\n");
-    printf("\n");
     printf("Usage: ms [options]\n");
-    printf("\n");
-    printf("-d X,Y,Z    Set dimensions with comma-delimited list\n");
-    printf("-m N        Set mine count to N\n");
-    printf("-d P        Set sweep pattern number\n");
-    printf("  1 - 2 Dimensional Square\n");
-    printf("  2 - 3 Dimensional Cube\n");
-    printf("  3 - 2 Dimensional Cross (Immediately adjacent cells only)\n");
-    printf("  4 - 3 Dimensional Cross (Immediately adjacent cells only)\n");
-    printf("  5 - 3 Dimensional Rings (Cube without corners)\n");
-    printf("\n");
-    printf("-h  Displays this information.\n");
-    printf("-v  Displays brief version information.\n");
+    printf("\t-d X,Y,Z\tSet dimensions with comma-delimited list\n");
+    printf("\t-m N\t\tSet mine count to N\n");
+    printf("\t-d P\t\tSet sweep pattern number\n");
+    printf("\t\t1 - 2 Dimensional Square\n");
+    printf("\t\t2 - 3 Dimensional Cube\n");
+    printf("\t\t3 - 2 Dimensional Cross (Immediately adjacent cells only)\n");
+    printf("\t\t4 - 3 Dimensional Cross (Immediately adjacent cells only)\n");
+    printf("\t\t5 - 3 Dimensional Rings (Cube without corners)\n");
+    printf("\t-h\t\tDisplays this information.\n");
+    printf("\t-v\t\tDisplays brief version information.\n");
 }
+
+Pattern patterns[] = {SQUARE, CUBE, CROSS, CROSS3D, RINGS};
 
 int main(int argc, char **argv) {
     Board *b;
@@ -42,24 +41,7 @@ int main(int argc, char **argv) {
                 break;
             case 'p':
                 sscanf(optarg, "%d", &pat);
-                switch(pat) {
-                    case 5:
-                        opts.pattern = RINGS;
-                        break;
-                    case 4:
-                        opts.pattern = CROSS3D;
-                        break;
-                    case 3:
-                        opts.pattern = CROSS;
-                        break;
-                    case 2:
-                        opts.pattern = CUBE;
-                        break;
-                    case 1:
-                    default:
-                        opts.pattern = SQUARE;
-                        break;
-                }
+                opts.pattern = patterns[pat - 1];
         }
     }
     b = make(&opts);
