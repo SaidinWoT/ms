@@ -22,16 +22,13 @@ bool won(Board *b) {
 }
 
 void around(void (*fn)(Board *, Dim, Dim, Dim), Board *b, Dim z, Dim y, Dim x) {
-    static char dz[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    static char dy[] = {-1,-1,-1, 0, 0, 0, 1, 1, 1,-1,-1,-1, 0, 0, 0, 1, 1, 1,-1,-1,-1, 0, 0, 0, 1, 1, 1};
-    static char dx[] = {-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1,-1, 0, 1};
     char u, v, w, n;
     int pattern = b->pattern & 0x07FFFFFF;
     for(n = 0; pattern; ++n, pattern >>= 1) {
         if(pattern & 1) {
-            w = z + dz[n];
-            v = y + dy[n];
-            u = x + dx[n];
+            w = z + n/9 - 1;
+            v = y + (n%9)/3 - 1;
+            u = x + n%3 - 1;
             if(w >= 0 && w < b->zlen && v >= 0 && v < b->ylen && u >= 0 && u < b->xlen) {
                 (*fn)(b, w, v, u);
             }
